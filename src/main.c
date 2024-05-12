@@ -39,7 +39,7 @@ client_t **init_clients(int number, int toy_number, toy_t **toys){
 
 // Inicia a instância dos brinquedos
 toy_t **init_toys(int number){
-    toy_t **toys = malloc(number * sizeof(toy_t));
+    toy_t **toys = malloc(number * sizeof(toy_t *));
     for (int i = 0; i < number; i++){
         toys[i] = (toy_t *) malloc(sizeof(toy_t));
         toys[i]->id = i + 1;
@@ -50,7 +50,7 @@ toy_t **init_toys(int number){
 
 // Inicia a instância dos funcionarios
 ticket_t ** init_tickets(int number){
-    ticket_t **tickets = malloc(number * sizeof(toy_t));
+    ticket_t **tickets = malloc(number * sizeof(ticket_t *));
     for (int i = 0; i < number; i++){
         tickets[i] = (ticket_t *) malloc(sizeof(ticket_t));
         tickets[i]->id = i + 1;
@@ -75,11 +75,12 @@ void finish_toys(toy_t **toys, int number_toys){
 }
 
  // Desaloca os funcionarios da bilheteria
-void finish_tickets(ticket_t **tickets, int number_clients){
-    for (int i = 0; i < number_clients; i++){
+void finish_tickets(ticket_t **tickets, int number_tickets){
+    for (int i = 0; i < number_tickets; i++){
         free(tickets[i]);
     }
     free(tickets);
+
 }
 
 /**************************************************
@@ -111,7 +112,7 @@ int main(int argc, char *argv[]){
     cli_args->n = _config.clients;
 
     // Inicializa os funcionarios da bilheteria.
-    ticket_t **tickets = init_tickets(_config.toys);
+    ticket_t **tickets = init_tickets(_config.tickets);
     ticket_args->tickets = tickets;
     ticket_args->n = _config.tickets;
     
