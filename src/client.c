@@ -12,6 +12,10 @@
 #include "queue.h"
 #include "shared.h"
 
+// VARS
+client_t **clients;
+int n_clients;
+
 
 // Thread que implementa o fluxo do cliente no parque.
 void *enjoy(void *arg){
@@ -36,21 +40,37 @@ void wait_ticket(client_t *self){
 // Funcao onde o cliente entra na fila da bilheteria
 void queue_enter(client_t *self){
     // Sua lógica aqui.
+    // coloca os clientes na fila
+    enqueue(gate_queue, self->id);
     debug("[WAITING] - Turista [%d] entrou na fila do portao principal\n", self->id);
-
-    // Sua lógica aqui.
+    // cliente deve esperar ser chamado por uma thread ticket
+    // para comprar moedas
+    wait_ticket(self);
+    // compra as moedas
     buy_coins(self);
+    debug("[CASH] - Turista [%d] comprou [%d] moedas.\n", self->id, self->coins);
+
+    // cria a thread que representara o clinete no parque
+    pthread_create(&self->thread, NULL, enjoy, (void *)self);
 
     // Sua lógica aqui.
-    debug("[CASH] - Turista [%d] comprou [%d] moedas.\n", self->id, self->coins);
 }
 
 // Essa função recebe como argumento informações sobre o cliente e deve iniciar os clientes.
 void open_gate(client_args *args){
-    // Sua lógica aqui
+    // guarda as variaveis dos clientes para uso nesse arquivo
+    clients = args->clients;
+    n_clients = args->n;
+
+    // chama os clientes para entrar na fila
+    for (int i = 0; i < args->n; i++)
+        queue_enter(args->clients[i]);
 }
 
 // Essa função deve finalizar os clientes
 void close_gate(){
-   //Sua lógica aqui
+   // espera os clientes acabarem
+    for (int i = 0; i < n_clients; i++)
+        pthread_join(clients[i]->thread, NULL);
+    debug("[FINISHED] - Todos os turistas sairam do parque.\n");
 }

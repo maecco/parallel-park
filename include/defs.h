@@ -37,6 +37,7 @@ typedef struct client{
   int coins;                // Quantidade de moedas do cliente.
   int number_toys;          // Numero de brinquedos disponiveis.
   toy_t **toys;             // (Copy) Array de brinquedos.
+  pthread_t thread;         // A thread do cliente.
 } client_t;
 
 /* Adicione as estruturas de sincronização que achar necessárias */

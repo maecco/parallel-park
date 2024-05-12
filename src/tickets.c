@@ -11,6 +11,9 @@
 #include <queue.h>
 #include "shared.h"
 
+// tickets_args
+ticket_t **tickets;
+int n_tickets;
 
 // Thread que implementa uma bilheteria
 void *sell(void *args){
@@ -23,9 +26,23 @@ void *sell(void *args){
 // Essa função recebe como argumento informações sobre a bilheteria e deve iniciar os atendentes.
 void open_tickets(tickets_args *args){
     // Sua lógica aqui
+
+    // guarda os argumentos de tickets_args
+    // para serem acesciveis em todo arquivo
+    tickets = args->tickets;
+    n_tickets = args->n;
+    
+    // inicia a thread para cada bilheteria
+    for (int i = 0; i < n_tickets; i++){
+        pthread_create(&tickets[i]->thread, NULL, sell, (void *) tickets[i]);
+    }    
 }
 
 // Essa função deve finalizar a bilheteria
 void close_tickets(){
     //Sua lógica aqui
+    // espera as threads dos atendentes terminarem
+    for (int i = 0; i < n_tickets; i++){
+        pthread_join(tickets[i]->thread, NULL);
+    }
 }
