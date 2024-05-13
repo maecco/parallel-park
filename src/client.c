@@ -16,9 +16,10 @@
 
 
 // Thread que implementa o fluxo do cliente no parque.
-void *enjoy(void *arg){
-
-    //Sua lógica aqui
+void *enjoy(void *arg){    
+    client_t* self = (client_t *) arg;
+    //espera na fila para comprar moedas
+    queue_enter(self);
 
 
     debug("[EXIT] - O turista saiu do parque.\n");
@@ -27,47 +28,45 @@ void *enjoy(void *arg){
 
 // Funcao onde o cliente compra as moedas para usar os brinquedos
 void buy_coins(client_t *self){
-    // Sua lógica aqui
+    self->coins = rand() % MAX_COINS + 1;
 }
 
 // Função onde o cliente espera a liberacao da bilheteria para adentrar ao parque.
 void wait_ticket(client_t *self){
-    // Sua lógica aqui
+    sem_wait(&self->canProcede);
 }
 
 // Funcao onde o cliente entra na fila da bilheteria
 void queue_enter(client_t *self){
-    // Sua lógica aqui.
-    // coloca os clientes na fila
+    // entra na fila principal para comprar moedas
     enqueue(gate_queue, self->id);
     debug("[WAITING] - Turista [%d] entrou na fila do portao principal\n", self->id);
-    // cliente deve esperar ser chamado por uma thread ticket
-    // para comprar moedas
+    // espera sua vez
     wait_ticket(self);
     // compra as moedas
     buy_coins(self);
     debug("[CASH] - Turista [%d] comprou [%d] moedas.\n", self->id, self->coins);
-
-    // cria a thread que representara o clinete no parque
-    pthread_create(&self->thread, NULL, enjoy, (void *)self);
-
-    // Sua lógica aqui.
 }
+
 
 // Essa função recebe como argumento informações sobre o cliente e deve iniciar os clientes.
 void open_gate(client_args *args){
     // guarda a cli_args globalmente
     g_cliArgs = args;
 
-    // chama os clientes para entrar na fila
-    for (int i = 0; i < args->n; i++)
-        queue_enter(args->clients[i]);
+    // inicializa as threads e estruturas de sincronizaçao dos clientes
+    for (int i = 0; i < args->n; i++){
+        sem_init(&args->clients[i]->canProcede, 0, 0);
+        pthread_create(&args->clients[i]->thread, NULL, enjoy, (void *)args->clients[i]);
+    }
 }
 
 // Essa função deve finalizar os clientes
 void close_gate(){
-   // espera os clientes acabarem
-    for (int i = 0; i < g_cliArgs->n; i++)
+   // espera os clientes acabarem e finaliza as threads e semaforos
+    for (int i = 0; i < g_cliArgs->n; i++){
         pthread_join(g_cliArgs->clients[i]->thread, NULL);
+        sem_destroy(&g_cliArgs->clients[i]->canProcede);
+    }
     debug("[FINISHED] - Todos os turistas sairam do parque.\n");
 }

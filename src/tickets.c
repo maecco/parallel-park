@@ -15,11 +15,16 @@
 ticket_t **tickets;
 int n_tickets;
 
+
 // Thread que implementa uma bilheteria
 void *sell(void *args){
 
     debug("[INFO] - Bilheteria Abriu!\n");
-
+    while ( is_queue_empty(gate_queue) == 0){        
+        int client_id = dequeue(gate_queue);
+        client_t *client = getClient(client_id);
+        sem_post(&client->canProcede);
+    }
     pthread_exit(NULL);
 }
 
