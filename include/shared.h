@@ -5,7 +5,14 @@
 
 // Você pode declarar novas funções (ou variaveis compartilhadas) aqui
 
+// GLOBAL VARS
+extern client_args* g_cliArgs;
 
+// GLOBAL FUNCTIONS
+
+// Funçao usada para encontrar o cliente correto
+// baseado no seu id
+client_t* getClient(int id);
 
 /**********************************
  *          ATENÇÃO               *

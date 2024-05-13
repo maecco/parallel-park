@@ -12,9 +12,7 @@
 #include "queue.h"
 #include "shared.h"
 
-// VARS
-client_t **clients;
-int n_clients;
+
 
 
 // Thread que implementa o fluxo do cliente no parque.
@@ -58,9 +56,8 @@ void queue_enter(client_t *self){
 
 // Essa função recebe como argumento informações sobre o cliente e deve iniciar os clientes.
 void open_gate(client_args *args){
-    // guarda as variaveis dos clientes para uso nesse arquivo
-    clients = args->clients;
-    n_clients = args->n;
+    // guarda a cli_args globalmente
+    g_cliArgs = args;
 
     // chama os clientes para entrar na fila
     for (int i = 0; i < args->n; i++)
@@ -70,7 +67,7 @@ void open_gate(client_args *args){
 // Essa função deve finalizar os clientes
 void close_gate(){
    // espera os clientes acabarem
-    for (int i = 0; i < n_clients; i++)
-        pthread_join(clients[i]->thread, NULL);
+    for (int i = 0; i < g_cliArgs->n; i++)
+        pthread_join(g_cliArgs->clients[i]->thread, NULL);
     debug("[FINISHED] - Todos os turistas sairam do parque.\n");
 }
