@@ -27,12 +27,12 @@ void *sell(void *args){
         sem_wait(&queueAccess);
         // recebe o id do proximo cliente da fila
         int client_id = dequeue(gate_queue);
-        // Se a fila estiver vazia, sai do loop
+        // Se a fila estiver vazia, sai do loop para encerrar as atividades
         if (client_id == -1){ 
             sem_post(&queueAccess);
             break; 
         } else {
-            debug("[INFO] - Bilheteria [%d] atendendo cliente [%d]\n", ticket->id, client_id);
+            debug("[TRACE] - Bilheteria [%d] atendendo cliente [%d]\n", ticket->id, client_id);
             // Libera o acesso da fila
             sem_post(&queueAccess);
 
@@ -69,7 +69,7 @@ void open_tickets(tickets_args *args){
 void close_tickets(){
     // Espera as threads dos atendentes terminarem
     for (int i = 0; i < n_tickets; i++){
-        printf("[INFO] - Bilheteria %d Fechou!\n", tickets[i]->id);
+        printf("[TRACE] - Bilheteria %d Fechou!\n", tickets[i]->id);
         pthread_join(tickets[i]->thread, NULL);
     }
     // Finaliza o semaforo da fila

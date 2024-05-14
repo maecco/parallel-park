@@ -12,6 +12,13 @@
 #include "toy.h"
 #include "shared.h"
 
+
+/*
+1. brinquedos tem um tempo maximo de espera
+2. brinquedos tem uma capacidade maxima e minima de pessoas
+3. brinquedos nao tem fila, é por ordem de chegada
+*/
+
 // toy_args
 toy_t **toys;
 int n_toys;
