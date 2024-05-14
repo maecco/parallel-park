@@ -63,9 +63,6 @@ int dequeue(Queue *queue) {
   Node *temp = queue->front;
   queue->front = queue->front->next;
 
-  printf("Dequeue: %d\n", data);
-  fflush(stdout);
-  
   if (queue->front == NULL) {
     queue->rear = NULL;
   }
