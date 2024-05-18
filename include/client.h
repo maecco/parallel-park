@@ -7,6 +7,7 @@
 
 
 void queue_enter(client_t* client);
+void go_ride(client_t* client, toy_t* toy);
 
 /********************************
  *          ATENÇÃO             *

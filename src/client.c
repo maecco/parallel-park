@@ -13,7 +13,7 @@
 #include "shared.h"
 
 
-
+// ######################### THREAD FUNCTION ############################
 
 // Thread que implementa o fluxo do cliente no parque.
 void *enjoy(void *arg){    
@@ -25,6 +25,10 @@ void *enjoy(void *arg){
     debug("[EXIT] - O turista saiu do parque.\n");
     pthread_exit(NULL);
 }
+
+
+// ######################### AUX FUNCTIONS ############################
+
 
 // Funcao onde o cliente compra as moedas para usar os brinquedos
 void buy_coins(client_t *self){
@@ -48,6 +52,12 @@ void queue_enter(client_t *self){
     debug("[CASH] - Turista [%d] comprou [%d] moedas.\n", self->id, self->coins);
 }
 
+
+void go_ride(client_t* self, toy_t* toy) {}
+
+
+
+// ########################### WRAPPER FUNCTIONS ############################
 
 // Essa função recebe como argumento informações sobre o cliente e deve iniciar os clientes.
 void open_gate(client_args *args){

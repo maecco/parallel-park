@@ -13,15 +13,11 @@
 #include "shared.h"
 
 
-/*
-1. brinquedos tem um tempo maximo de espera
-2. brinquedos tem uma capacidade maxima e minima de pessoas
-3. brinquedos nao tem fila, é por ordem de chegada
-*/
-
-// toy_args
+// Toy_args
 toy_t **toys;
 int n_toys;
+
+// ######################### THREAD FUNCTION ############################
 
 // Thread que o brinquedo vai usar durante toda a simulacao do sistema
 void *turn_on(void *args){
@@ -33,6 +29,21 @@ void *turn_on(void *args){
 
     pthread_exit(NULL);
 }
+
+// ######################### AUX FUNCTIONS ############################
+
+
+void wait_crowd(toy_t *self){
+}
+
+void startRide(toy_t *self){
+}
+
+void freeRide(toy_t *self){
+}
+
+
+// ########################### WRAPPER FUNCTIONS ############################
 
 
 // Essa função recebe como argumento informações e deve iniciar os brinquedos.

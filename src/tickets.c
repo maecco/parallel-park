@@ -17,6 +17,9 @@ int n_tickets;
 // access queue mutex
 sem_t queueAccess;
 
+
+// ######################### THREAD FUNCTION ############################
+
 // Thread que implementa uma bilheteria
 void *sell(void *args){
     ticket_t* ticket  = (ticket_t*) args;
@@ -29,13 +32,11 @@ void *sell(void *args){
         int client_id = dequeue(gate_queue);
         // Se a fila estiver vazia, sai do loop para encerrar as atividades
         if (client_id == -1){ 
-            sem_post(&queueAccess);
             break; 
         } else {
             debug("[TRACE] - Bilheteria [%d] atendendo cliente [%d]\n", ticket->id, client_id);
             // Libera o acesso da fila
             sem_post(&queueAccess);
-
             // Busca o objeto cliente pelo id fornecido e o libera para prosseguir
             client_t *client = getClient(client_id);
             sem_post(&client->canProcede);
@@ -43,6 +44,11 @@ void *sell(void *args){
     }
     pthread_exit(NULL);
 }
+
+// ######################### AUX FUNCTIONS ############################
+// NONE :P
+// ########################### WRAPPER FUNCTIONS ############################
+
 
 // Essa função recebe como argumento informações sobre a bilheteria e deve iniciar os atendentes.
 void open_tickets(tickets_args *args){
