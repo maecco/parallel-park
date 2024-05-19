@@ -34,7 +34,7 @@ void *sell(void *args){
         if (client_id == -1){ 
             break; 
         } else {
-            debug("[TRACE] - Bilheteria [%d] atendendo cliente [%d]\n", ticket->id, client_id);
+            debug("{TICKET %d} - Atendendo cliente [%d]\n", ticket->id, client_id);
             // Libera o acesso da fila
             sem_post(&queueAccess);
             // Busca o objeto cliente pelo id fornecido e o libera para prosseguir
@@ -75,7 +75,7 @@ void open_tickets(tickets_args *args){
 void close_tickets(){
     // Espera as threads dos atendentes terminarem
     for (int i = 0; i < n_tickets; i++){
-        printf("[TRACE] - Bilheteria %d Fechou!\n", tickets[i]->id);
+        debug("{TICKET %d} - Fechou!\n", tickets[i]->id);
         pthread_join(tickets[i]->thread, NULL);
     }
     // Finaliza o semaforo da fila

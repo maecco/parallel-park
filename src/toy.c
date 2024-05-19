@@ -21,21 +21,22 @@ int n_toys;
 
 // Thread que o brinquedo vai usar durante toda a simulacao do sistema
 void *turn_on(void *args){
-    toy_t *toy = (toy_t*) args;
+    toy_t *self = (toy_t*) args;
 
-    debug("[ON] - O brinquedo  [%d] foi ligado.\n", toy->id); // Altere para o id do brinquedo
+    debug("[ON] - O brinquedo  [%d] foi ligado.\n", self->id); // Altere para o id do brinquedo
 
     while ( TRUE )
     {
-        wait_crowd(toy);
+        // Espera por turistas
+        wait_crowd(self);
+        // Se nao houver mais turistas, desliga o brinquedo
         if ( no_clients ) { break; }
-        startRide(toy);
-        freeRide(toy);
+        // Inicia o brinquedo
+        startRide(self);
+        // Libera os turistas e reseta o brinquedo
+        freeRide(self);
     }
-    
-
-    debug("[OFF] - O brinquedo [%d] foi desligado.\n", toy->id); // Altere para o id do brinquedo
-
+    debug("[OFF] - O brinquedo [%d] foi desligado.\n", self->id); // Altere para o id do brinquedo
     pthread_exit(NULL);
 }
 
@@ -44,33 +45,54 @@ void *turn_on(void *args){
 
 void wait_crowd(toy_t *self){
     
-    debug("[WAIT] - O brinquedo [%d] está esperando por turistas.\n", self->id);
+    debug("{TOY %d} - O brinquedo esperando por turistas.\n", self->id);
     pthread_mutex_lock(&self->startLock);
-    while ( self->onboard_n < self->capacity )
-    {
-        // Permite a entrada
+    // Enquanto houver espaço no brinquedo e houver clientes no parque
+    while ( self->onboard_n < self->capacity && !no_clients ) {
+        // Libera a entrada de clientes
         sem_post(&self->canEnter);
-        // Espera um sinal para começar
-        pthread_cond_wait(&self->full, &self->startLock);
+        // Espera o sinal do primeiro cliente para iniciar o timer de espera
+        sem_wait(&self->startTimer);
+        clock_gettime(CLOCK_REALTIME, &self->timeout);
+        self->timeout.tv_sec += self->waitSeconds;
+        debug("{TOY %d} - Tempo de espera ajustado para [%d sec]\n", self->id, self->waitSeconds);
+        // Espera que o brinquedo esteja cheio ou que o tempo limite tenha sido atingido
+        int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->timeout);
+        if ( ret == ETIMEDOUT && no_clients == FALSE ) { 
+            debug("{TOY %d} - Iniciando por excesso de espera.\n", self->id);
+            break;
+        } else {
+            debug("{TOY %d} - Está cheio.\n", self->id);
+        }
     }
 }
 
+// Funçao simbolica, apenas para simular o brinquedo andando
 void startRide(toy_t *self){
-    debug("[START] - O brinquedo [%d] começou a andar.\n", self->id);
+    debug("{TOY %d} - Começou a andar.\n", self->id);
     sleep(1);
-    debug("[END] - O brinquedo [%d] terminou a andar.\n", self->id);
+    debug("{TOY %d} - Terminou de andar.\n", self->id);
 }
 
 void freeRide(toy_t *self){
+    // Bloqueia a comunicaçap com o brinquedo
     pthread_mutex_lock(&self->clientAccess);
+    // Libera os clientes que estavam no brinquedo
     for ( int i = 0; i < self->onboard_n; i++ ) {
+        // Busca o cliente pelo id
         client_t* cli = getClient(self->onboardID[i]);
+        // Deduz uma moeda do cliente
         cli->coins--;
+        // Aval para o cliente prosseguir
         sem_post(&cli->canProcede);
+        // Remove o cliente do brinquedo
         self->onboardID[i] = -1;
     }
     self->onboard_n = 0;
+    // Libera a comunicaçao com o brinquedo
     pthread_mutex_unlock(&self->clientAccess);
+    // Libera a condiçao de inicio do brinquedo
+    pthread_mutex_unlock(&self->startLock);
 }
 
 
@@ -99,6 +121,12 @@ void open_toys(toy_args *args){
 
 // Desligando os brinquedos
 void close_toys(){
+
+    for (int i = 0; i < n_toys; i++){
+        toy_t* toy = toys[i];
+        toy->waitSeconds = 0;
+        sem_post(&toy->startTimer);
+    }
 
     // Espera as threads dos brinquedos terminarem
     for(int i = 0; i < n_toys; i++){

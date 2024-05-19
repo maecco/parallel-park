@@ -1,19 +1,23 @@
 #ifndef __DEFS_H__
 #define __DEFS_H__
 
+
 /* Essa biblioteca implementa definicoes que sao usadas pelo programa. */
 /* ATENÇÃO: NÃO APAGUE OU EDITE O NOMES FORNECIDOS */
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <errno.h> // ETIMEDOUT
+#include <time.h> // time_t
 
 #define TRUE 1              // Em C nao temos True ou False (como no Python). Usamos macro TRUE para True (como no Python). 
 #define FALSE 0             // e FALSE para False (como no Python).
 
 
-#define MAX_CAPACITY_TOY    2  // Capacidade maxima dos brinquedos.
+#define MAX_CAPACITY_TOY    3  // Capacidade maxima dos brinquedos.
 #define MIN_CAPACITY_TOY    2   // Capacidade minima dos brinquedos.
-#define MAX_COINS           1  // Maximo de moedas que um cliente pode comprar
+#define MAX_COINS           5  // Maximo de moedas que um cliente pode comprar
+#define MAX_TIME            2  // Tempo limite de espera para um brnquedo.
 
 #define DEBUG               1   //  Alterne (0 or 1) essa macro se voce espera desabilitar todas as mensagens de debug.
 
@@ -32,14 +36,16 @@ typedef struct toy{
   // Controle
   int onboard_n;            // Numero de pessoas no brinquedo.
   int* onboardID;           // Array de clientes(ID) no brinquedo.
+  int waitSeconds;          // Tempo de espera para o brinquedo.
   // Sync
   sem_t hasSpace;           // Semáforo para indicar quantos lugares vagos ha ainda
   sem_t canEnter;           // Semáforo para o cliente poder entrar no brinquedo.
+  sem_t startTimer;         // Semáforo para iniciar o timer.
   pthread_mutex_t clientAccess; // Mutex para controlar a comunicaçao com o brinquedo
+  struct timespec timeout;         // Tempo limite de espera para um brinquedo.
   // Cond
   pthread_cond_t full;      // Condiçao para indicar que o brinquedo esta cheio.
   pthread_mutex_t startLock; // Mutex para controlar o inicio do brinquedo.
-  sem_t listening;         // Semáforo para a finalizaçao do brinquedo.
 } toy_t;
 
 /* Adicione as estruturas de sincronização que achar necessárias */

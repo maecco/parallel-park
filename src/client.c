@@ -28,6 +28,7 @@ void *enjoy(void *arg){
         toy_t* toy = self->toys[toy_id];
         // Entra na fila do brinquedo
         go_ride(self, toy);
+        debug("{CLIENT %d} - Turista ainda tem [%d] moedas.\n", self->id, self->coins);
     }
 
     debug("[EXIT] - O turista saiu do parque.\n");
@@ -57,7 +58,7 @@ void queue_enter(client_t *self){
     wait_ticket(self);
     // compra as moedas
     buy_coins(self);
-    debug("[CASH] - Turista [%d] comprou [%d] moedas.\n", self->id, self->coins);
+    debug("{CLIENT %d} - Comprou [%d] moedas.\n", self->id, self->coins);
 }
 
 
@@ -68,21 +69,31 @@ void go_ride(client_t* self, toy_t* toy) {
     sem_wait(&toy->canEnter);
     // Espera sua vez para entrar
     pthread_mutex_lock(&toy->clientAccess);
-    // Entra no brinquedo
+    // Entra no brinquedo e registra sua entrada
+    // ID do cliente no brinquedo
     toy->onboardID[toy->onboard_n] = self->id;
+    // Incrementa o numero de pessoas no brinquedo
     toy->onboard_n++;
-    debug("[ENTER] - Turista [%d] entrou no brinquedo [%d].\n", self->id, toy->id);
+    // Primeiro cliente
+    if (toy->onboard_n == 1 ) { 
+        // Inicia o timer do brinquedo 
+        toy->waitSeconds = MAX_TIME;
+        sem_post(&toy->startTimer);
+    }
+    debug("{CLIENT %d} - Entrou no brinquedo [%d].\n", self->id, toy->id);
+    // Se o brinquedo estiver cheio, sinaliza para iniciar
     if (toy->onboard_n == toy->capacity) {
         pthread_cond_signal(&toy->full);
     }
+    // Do contrario apenas libera a entrada
     else {
         sem_post(&toy->canEnter);
     }
-    // Libera o brinquedo
+    // Libera a comunicaçao com o brinquedo
     pthread_mutex_unlock(&toy->clientAccess);
-    // Espera o brinquedo acabar
+    // Espera o brinquedo acabar de rodar para seguir no parque
     sem_wait(&self->canProcede);
-    debug("[EXIT] - Turista [%d] saiu do brinquedo [%d].\n", self->id, toy->id);
+    debug("{CLIENT %d} - Saiu do brinquedo [%d].\n", self->id, toy->id);
 }
 
 
