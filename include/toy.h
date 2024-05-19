@@ -10,7 +10,6 @@ void wait_crowd(toy_t *self);
 void startRide(toy_t *self);
 void freeRide(toy_t *self);
 
-
 /********************************
  *          ATENÇÃO             *
  *   NÃO EDITAR ESSAS FUNÇÕES   *

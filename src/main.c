@@ -141,7 +141,7 @@ int main(int argc, char *argv[]){
 
     // Desalocando clientes.
     finish_clients(clients, _config.clients);
-    
+
     // Desalocando brinquedos.
     finish_toys(toys, _config.toys);
 

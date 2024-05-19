@@ -7,6 +7,7 @@
 
 // GLOBAL VARS
 extern client_args* g_cliArgs;
+extern int no_clients;
 
 // GLOBAL FUNCTIONS
 

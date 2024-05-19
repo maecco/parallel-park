@@ -18,9 +18,17 @@
 // Thread que implementa o fluxo do cliente no parque.
 void *enjoy(void *arg){    
     client_t* self = (client_t *) arg;
-    //espera na fila para comprar moedas
+    // Espera na fila para comprar moedas
     queue_enter(self);
-
+    // Entra no parque
+    // Main loop client
+    while ( self->coins > 0 ){
+        // Seleciona um brinquedo aleatoriamente
+        int toy_id = rand() % self->number_toys;
+        toy_t* toy = self->toys[toy_id];
+        // Entra na fila do brinquedo
+        go_ride(self, toy);
+    }
 
     debug("[EXIT] - O turista saiu do parque.\n");
     pthread_exit(NULL);
@@ -53,7 +61,29 @@ void queue_enter(client_t *self){
 }
 
 
-void go_ride(client_t* self, toy_t* toy) {}
+void go_ride(client_t* self, toy_t* toy) {
+    // Espera ter espaço no brinquedo
+    sem_wait(&toy->hasSpace);
+    // Espera o brinquedo parar para entrar
+    sem_wait(&toy->canEnter);
+    // Espera sua vez para entrar
+    pthread_mutex_lock(&toy->clientAccess);
+    // Entra no brinquedo
+    toy->onboardID[toy->onboard_n] = self->id;
+    toy->onboard_n++;
+    debug("[ENTER] - Turista [%d] entrou no brinquedo [%d].\n", self->id, toy->id);
+    if (toy->onboard_n == toy->capacity) {
+        pthread_cond_signal(&toy->full);
+    }
+    else {
+        sem_post(&toy->canEnter);
+    }
+    // Libera o brinquedo
+    pthread_mutex_unlock(&toy->clientAccess);
+    // Espera o brinquedo acabar
+    sem_wait(&self->canProcede);
+    debug("[EXIT] - Turista [%d] saiu do brinquedo [%d].\n", self->id, toy->id);
+}
 
 
 
@@ -79,4 +109,5 @@ void close_gate(){
         sem_destroy(&g_cliArgs->clients[i]->canProcede);
     }
     debug("[FINISHED] - Todos os turistas sairam do parque.\n");
+    no_clients = TRUE;
 }

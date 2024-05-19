@@ -29,6 +29,17 @@ typedef struct toy{
   int id;                   // O id de um brinquedo.
   int capacity;             // A capacidade total de um brinquedo.
   pthread_t thread;         // A thread de um brinquedo.
+  // Controle
+  int onboard_n;            // Numero de pessoas no brinquedo.
+  int* onboardID;           // Array de clientes(ID) no brinquedo.
+  // Sync
+  sem_t hasSpace;           // Semáforo para indicar quantos lugares vagos ha ainda
+  sem_t canEnter;           // Semáforo para o cliente poder entrar no brinquedo.
+  pthread_mutex_t clientAccess; // Mutex para controlar a comunicaçao com o brinquedo
+  // Cond
+  pthread_cond_t full;      // Condiçao para indicar que o brinquedo esta cheio.
+  pthread_mutex_t startLock; // Mutex para controlar o inicio do brinquedo.
+  sem_t listening;         // Semáforo para a finalizaçao do brinquedo.
 } toy_t;
 
 /* Adicione as estruturas de sincronização que achar necessárias */

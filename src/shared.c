@@ -7,6 +7,7 @@
 
 
 client_args* g_cliArgs = NULL;
+int no_clients = 0;
 
 client_t* getClient(int id){
     for (int i = 0; i < g_cliArgs->n; i++){
