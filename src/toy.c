@@ -24,6 +24,8 @@ void *turn_on(void *args){
     toy_t *self = (toy_t*) args;
 
     debug("[ON] - O brinquedo  [%d] foi ligado.\n", self->id); // Altere para o id do brinquedo
+    debug("| ID %d | Capacidade [%d] | Tempo de espera [%d] |\n", self->id, self->capacity, self->waitSeconds);
+
 
     while ( TRUE )
     {
@@ -55,7 +57,9 @@ void wait_crowd(toy_t *self){
         sem_wait(&self->startTimer);
         clock_gettime(CLOCK_REALTIME, &self->timeout);
         self->timeout.tv_sec += self->waitSeconds;
-        debug("{TOY %d} - Contando tempo de espera [%d sec]\n", self->id, self->waitSeconds);
+        if ( no_clients == FALSE ) {
+            debug("{TOY %d} - Contando tempo de espera [%d sec]\n", self->id, self->waitSeconds);
+        }
         // Espera que o brinquedo esteja cheio ou que o tempo limite tenha sido atingido
         int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->timeout);
         if ( no_clients == FALSE ) { 
@@ -113,6 +117,7 @@ void open_toys(toy_args *args){
 
     //inicia a thread para cada brinquedo
     for(int i = 0; i < n_toys; i++){
+        toys[i]->waitSeconds = rand() % MAX_TIME + 1;
         pthread_mutex_init(&toys[i]->clientAccess, NULL);
         pthread_mutex_init(&toys[i]->startLock, NULL);
         sem_init(&toys[i]->hasSpace, 0, toys[i]->capacity);

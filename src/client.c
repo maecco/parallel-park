@@ -79,7 +79,6 @@ void go_ride(client_t* self, toy_t* toy) {
     // Primeiro cliente
     if (toy->onboard_n == 1 ) { 
         // Inicia o timer do brinquedo 
-        toy->waitSeconds = MAX_TIME;
         sem_post(&toy->startTimer);
     }
     // Se o brinquedo estiver cheio, sinaliza para iniciar
