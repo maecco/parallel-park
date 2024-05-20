@@ -24,7 +24,7 @@ void *turn_on(void *args){
     toy_t *self = (toy_t*) args;
 
     debug("[ON] - O brinquedo  [%d] foi ligado.\n", self->id); // Altere para o id do brinquedo
-    debug("| ID %d | Capacidade [%d] | Tempo de espera [%d] |\n", self->id, self->capacity, self->waitSeconds);
+    debug("TOYSPEC | ID %d | Capacidade [%d] | Tempo de espera [%d] ms |\n", self->id, self->capacity, self->msWait);
 
 
     while ( TRUE )
@@ -55,10 +55,9 @@ void wait_crowd(toy_t *self){
         sem_post(&self->canEnter);
         // Espera o sinal do primeiro cliente para iniciar o timer de espera
         sem_wait(&self->startTimer);
-        clock_gettime(CLOCK_REALTIME, &self->timeout);
-        self->timeout.tv_sec += self->waitSeconds;
+        setClock(&self->timeout, self->msWait);
         if ( no_clients == FALSE ) {
-            debug("{TOY %d} - Contando tempo de espera [%d sec]\n", self->id, self->waitSeconds);
+            debug("{TOY %d} - Contando tempo de espera [%d ms]\n", self->id, self->msWait);
         }
         // Espera que o brinquedo esteja cheio ou que o tempo limite tenha sido atingido
         int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->timeout);
@@ -104,6 +103,14 @@ void freeRide(toy_t *self){
 }
 
 
+void setClock(struct timespec *ts, int ms){
+    clock_gettime(CLOCK_REALTIME, ts);
+    ts->tv_nsec += ms;
+    ts->tv_sec += ts->tv_nsec / BILLION;
+    ts->tv_nsec = ts->tv_nsec % BILLION;
+}
+
+
 // ########################### WRAPPER FUNCTIONS ############################
 
 
@@ -117,7 +124,7 @@ void open_toys(toy_args *args){
 
     //inicia a thread para cada brinquedo
     for(int i = 0; i < n_toys; i++){
-        toys[i]->waitSeconds = rand() % MAX_TIME + 1;
+        toys[i]->msWait = rand() % MAX_TIME + 1;
         pthread_mutex_init(&toys[i]->clientAccess, NULL);
         pthread_mutex_init(&toys[i]->startLock, NULL);
         sem_init(&toys[i]->hasSpace, 0, toys[i]->capacity);
@@ -133,7 +140,7 @@ void close_toys(){
 
     for (int i = 0; i < n_toys; i++){
         toy_t* toy = toys[i];
-        toy->waitSeconds = 0;
+        toy->msWait = 0;
         sem_post(&toy->startTimer);
     }
 

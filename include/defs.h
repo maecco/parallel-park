@@ -13,11 +13,13 @@
 #define TRUE 1              // Em C nao temos True ou False (como no Python). Usamos macro TRUE para True (como no Python). 
 #define FALSE 0             // e FALSE para False (como no Python).
 
+#define MILLION 1000000     // 1 milhao. Usado para converter segundos em milisegundos.
+#define BILLION 1000000000  // 1 bilhao. 
 
 #define MAX_CAPACITY_TOY    3  // Capacidade maxima dos brinquedos.
 #define MIN_CAPACITY_TOY    1   // Capacidade minima dos brinquedos.
 #define MAX_COINS           3  // Maximo de moedas que um cliente pode comprar
-#define MAX_TIME            3  // Tempo limite de espera para um brnquedo.
+#define MAX_TIME            300  // Tempo limite de espera para um brnquedo (em ms)
 
 #define DEBUG               1   //  Alterne (0 or 1) essa macro se voce espera desabilitar todas as mensagens de debug.
 
@@ -36,7 +38,7 @@ typedef struct toy{
   // Controle
   int onboard_n;            // Numero de pessoas no brinquedo.
   int* onboardID;           // Array de clientes(ID) no brinquedo.
-  int waitSeconds;          // Tempo de espera para o brinquedo.
+  int msWait;               // Tempo de espera maximo para um brinquedo.
   // Sync
   sem_t hasSpace;           // Semáforo para indicar quantos lugares vagos ha ainda
   sem_t canEnter;           // Semáforo para o cliente poder entrar no brinquedo.

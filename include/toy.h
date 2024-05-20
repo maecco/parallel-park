@@ -10,6 +10,8 @@
 void wait_crowd(toy_t *self);
 void startRide(toy_t *self);
 void freeRide(toy_t *self);
+void setClock(struct timespec *ts, int ms);
+
 
 /********************************
  *          ATENÇÃO             *
