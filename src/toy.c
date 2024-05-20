@@ -45,7 +45,7 @@ void *turn_on(void *args){
 
 void wait_crowd(toy_t *self){
     
-    debug("{TOY %d} - O brinquedo esperando por turistas.\n", self->id);
+    debug("{TOY %d} - Esperando por turistas.\n", self->id);
     pthread_mutex_lock(&self->startLock);
     // Enquanto houver espaço no brinquedo e houver clientes no parque
     while ( self->onboard_n < self->capacity && !no_clients ) {
@@ -55,14 +55,16 @@ void wait_crowd(toy_t *self){
         sem_wait(&self->startTimer);
         clock_gettime(CLOCK_REALTIME, &self->timeout);
         self->timeout.tv_sec += self->waitSeconds;
-        debug("{TOY %d} - Tempo de espera ajustado para [%d sec]\n", self->id, self->waitSeconds);
+        debug("{TOY %d} - Contando tempo de espera [%d sec]\n", self->id, self->waitSeconds);
         // Espera que o brinquedo esteja cheio ou que o tempo limite tenha sido atingido
         int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->timeout);
-        if ( ret == ETIMEDOUT && no_clients == FALSE ) { 
-            debug("{TOY %d} - Iniciando por excesso de espera.\n", self->id);
-            break;
-        } else {
-            debug("{TOY %d} - Está cheio.\n", self->id);
+        if ( no_clients == FALSE ) { 
+            if ( ret == ETIMEDOUT ) {
+                debug("{TOY %d} - Iniciando por excesso de espera.\n", self->id);
+                break;
+            } else {
+                debug("{TOY %d} - Está cheio.\n", self->id);
+            }
         }
     }
 }
@@ -87,6 +89,8 @@ void freeRide(toy_t *self){
         sem_post(&cli->canProcede);
         // Remove o cliente do brinquedo
         self->onboardID[i] = -1;
+        // Libera a entrada de um novo cliente
+        sem_post(&self->hasSpace);
     }
     self->onboard_n = 0;
     // Libera a comunicaçao com o brinquedo

@@ -28,7 +28,7 @@ void *enjoy(void *arg){
         toy_t* toy = self->toys[toy_id];
         // Entra na fila do brinquedo
         go_ride(self, toy);
-        debug("{CLIENT %d} - Turista ainda tem [%d] moedas.\n", self->id, self->coins);
+        debug("{CLIENT %d} - Possui [%d] moedas.\n", self->id, self->coins);
     }
 
     debug("[EXIT] - O turista saiu do parque.\n");
@@ -63,6 +63,7 @@ void queue_enter(client_t *self){
 
 
 void go_ride(client_t* self, toy_t* toy) {
+    debug("{CLIENT %d} - Na fila do brinquedo [%d].\n", self->id, toy->id);
     // Espera ter espaço no brinquedo
     sem_wait(&toy->hasSpace);
     // Espera o brinquedo parar para entrar
@@ -74,13 +75,13 @@ void go_ride(client_t* self, toy_t* toy) {
     toy->onboardID[toy->onboard_n] = self->id;
     // Incrementa o numero de pessoas no brinquedo
     toy->onboard_n++;
+    debug("{CLIENT %d} - Entrou no brinquedo [%d].\n", self->id, toy->id);
     // Primeiro cliente
     if (toy->onboard_n == 1 ) { 
         // Inicia o timer do brinquedo 
         toy->waitSeconds = MAX_TIME;
         sem_post(&toy->startTimer);
     }
-    debug("{CLIENT %d} - Entrou no brinquedo [%d].\n", self->id, toy->id);
     // Se o brinquedo estiver cheio, sinaliza para iniciar
     if (toy->onboard_n == toy->capacity) {
         pthread_cond_signal(&toy->full);

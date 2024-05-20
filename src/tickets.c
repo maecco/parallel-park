@@ -73,6 +73,12 @@ void open_tickets(tickets_args *args){
 
 // Essa função deve finalizar a bilheteria
 void close_tickets(){
+
+    // Libera as threads das bilheterias
+    for (int i = 0; i < n_tickets; i++){
+        sem_post(&queueAccess);
+    }
+
     // Espera as threads dos atendentes terminarem
     for (int i = 0; i < n_tickets; i++){
         debug("{TICKET %d} - Fechou!\n", tickets[i]->id);
