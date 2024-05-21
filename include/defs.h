@@ -1,7 +1,6 @@
 #ifndef __DEFS_H__
 #define __DEFS_H__
 
-
 /* Essa biblioteca implementa definicoes que sao usadas pelo programa. */
 /* ATENÇÃO: NÃO APAGUE OU EDITE O NOMES FORNECIDOS */
 
@@ -17,9 +16,13 @@
 #define BILLION 1000000000  // 1 bilhao. 
 
 #define MAX_CAPACITY_TOY    3  // Capacidade maxima dos brinquedos.
-#define MIN_CAPACITY_TOY    1   // Capacidade minima dos brinquedos.
-#define MAX_COINS           3  // Maximo de moedas que um cliente pode comprar
-#define MAX_TIME            300  // Tempo limite de espera para um brnquedo (em ms)
+#define MIN_CAPACITY_TOY    1  // Capacidade minima dos brinquedos.
+#define MAX_COINS           5 // Maximo de moedas que um cliente pode comprar
+// TIMEDEFS
+#define MAX_WAIT_TIME            300  // Tempo limite de espera para um brnquedo (em ms)
+#define MIN_WAIT_TIME            100  // Tempo minimo de espera para um brinquedo (em ms)
+#define MAX_RIDE_TIME            200  // Tempo maximo de um brinquedo (em ms)
+#define MIN_RIDE_TIME            50   // Tempo minimo de um brinquedo (em ms)
 
 #define DEBUG               1   //  Alterne (0 or 1) essa macro se voce espera desabilitar todas as mensagens de debug.
 
@@ -38,15 +41,16 @@ typedef struct toy{
   // Controle
   int onboard_n;            // Numero de pessoas no brinquedo.
   int* onboardID;           // Array de clientes(ID) no brinquedo.
+  int msRide;               // Tempo de duração de um brinquedo.
   int msWait;               // Tempo de espera maximo para um brinquedo.
+  struct timespec ts;       // Timespec auxiliar para o timer.
   // Sync
-  sem_t hasSpace;           // Semáforo para indicar quantos lugares vagos ha ainda
-  sem_t canEnter;           // Semáforo para o cliente poder entrar no brinquedo.
-  sem_t startTimer;         // Semáforo para iniciar o timer.
-  pthread_mutex_t clientAccess; // Mutex para controlar a comunicaçao com o brinquedo
-  struct timespec timeout;         // Tempo limite de espera para um brinquedo.
-  // Cond
-  pthread_cond_t full;      // Condiçao para indicar que o brinquedo esta cheio.
+  sem_t hasSpace;               // Semáforo para indicar quantos lugares vagos ha ainda
+  sem_t canEnter;               // Semáforo que indica se o brinquedo esta parado ou nao
+  sem_t startTimer;             // Semáforo para iniciar o timer na hora certa.
+  pthread_mutex_t clientAccess; // Mutex para controlar a quem esta falando com o brinquedo.
+  // Cond Sync
+  pthread_cond_t full;      // Condiçao para indicar que o brinquedo esta cheio.(deve iniciar)
   pthread_mutex_t startLock; // Mutex para controlar o inicio do brinquedo.
 } toy_t;
 

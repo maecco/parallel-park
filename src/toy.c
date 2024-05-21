@@ -24,7 +24,9 @@ void *turn_on(void *args){
     toy_t *self = (toy_t*) args;
 
     debug("[ON] - O brinquedo  [%d] foi ligado.\n", self->id); // Altere para o id do brinquedo
-    debug("TOYSPEC | ID %d | Capacidade [%d] | Tempo de espera [%d] ms |\n", self->id, self->capacity, self->msWait);
+    const char* str = "TOYSPEC | ID %d | Capacidade [%d] |\
+Tempo de espera [%d ms] | Tempo de percurso [%d ms] \n";
+    debug(str, self->id, self->capacity, self->msWait, self->msRide);
 
 
     while ( TRUE )
@@ -48,6 +50,7 @@ void *turn_on(void *args){
 void wait_crowd(toy_t *self){
     
     debug("{TOY %d} - Esperando por turistas.\n", self->id);
+    // Trava o inicio do brinquedo até que as condiçoes sejam atendidas
     pthread_mutex_lock(&self->startLock);
     // Enquanto houver espaço no brinquedo e houver clientes no parque
     while ( self->onboard_n < self->capacity && !no_clients ) {
@@ -55,12 +58,17 @@ void wait_crowd(toy_t *self){
         sem_post(&self->canEnter);
         // Espera o sinal do primeiro cliente para iniciar o timer de espera
         sem_wait(&self->startTimer);
-        setClock(&self->timeout, self->msWait);
+        setClock(&self->ts, self->msWait);
+        // Print apenas para debug...
         if ( no_clients == FALSE ) {
             debug("{TOY %d} - Contando tempo de espera [%d ms]\n", self->id, self->msWait);
         }
-        // Espera que o brinquedo esteja cheio ou que o tempo limite tenha sido atingido
-        int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->timeout);
+        // Espera um sinal de que o brinquedo esteja cheio
+        // ou que o tempo limite tenha sido atingido
+        int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->ts);
+        // Se a condiçao abaixo for falsa, significa que todos os clientes
+        // ja sairam do parque e o brinquedo deve ser desligado
+        // Se for verdadeira o brinquedo deve começar
         if ( no_clients == FALSE ) { 
             if ( ret == ETIMEDOUT ) {
                 debug("{TOY %d} - Iniciando por excesso de espera.\n", self->id);
@@ -74,13 +82,16 @@ void wait_crowd(toy_t *self){
 
 // Funçao simbolica, apenas para simular o brinquedo andando
 void startRide(toy_t *self){
-    debug("{TOY %d} - Começou a andar.\n", self->id);
-    sleep(1);
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = self->msRide * MILLION;
+    debug("{TOY %d} - Começou a andar. [%d ms]\n", self->id, self->msRide);
+    nanosleep(&ts, NULL);
     debug("{TOY %d} - Terminou de andar.\n", self->id);
 }
 
 void freeRide(toy_t *self){
-    // Bloqueia a comunicaçap com o brinquedo
+    // Bloqueia a comunicaça de clientes com o brinquedo
     pthread_mutex_lock(&self->clientAccess);
     // Libera os clientes que estavam no brinquedo
     for ( int i = 0; i < self->onboard_n; i++ ) {
@@ -104,8 +115,13 @@ void freeRide(toy_t *self){
 
 
 void setClock(struct timespec *ts, int ms){
+    // Pega o tempo atual
     clock_gettime(CLOCK_REALTIME, ts);
-    ts->tv_nsec += ms;
+    // Adiciona o tempo em ms
+    ts->tv_nsec += ms * MILLION;
+    // Se ts->tv_nsec for maior que 1 segundo (1 bilhao de nanosegundos)
+    // Incrementa o segundo e diminui 1 segundo de ts->tv_nsec
+    // Caso contrario as operaçoes abaixo nao tem efeito
     ts->tv_sec += ts->tv_nsec / BILLION;
     ts->tv_nsec = ts->tv_nsec % BILLION;
 }
@@ -124,7 +140,8 @@ void open_toys(toy_args *args){
 
     //inicia a thread para cada brinquedo
     for(int i = 0; i < n_toys; i++){
-        toys[i]->msWait = rand() % MAX_TIME + 1;
+        toys[i]->msWait = rand() % (MAX_WAIT_TIME - MIN_WAIT_TIME + 1) + MIN_WAIT_TIME;
+        toys[i]->msRide = rand() % (MAX_RIDE_TIME - MIN_RIDE_TIME + 1) + MIN_RIDE_TIME;
         pthread_mutex_init(&toys[i]->clientAccess, NULL);
         pthread_mutex_init(&toys[i]->startLock, NULL);
         sem_init(&toys[i]->hasSpace, 0, toys[i]->capacity);
