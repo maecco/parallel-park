@@ -66,9 +66,7 @@ void go_ride(client_t* self, toy_t* toy) {
     debug("{CLIENT %d} - Na fila do brinquedo [%d].\n", self->id, toy->id);
     // Espera ter espaço no brinquedo
     sem_wait(&toy->hasSpace);
-    // Espera o brinquedo parar para entrar
-    sem_wait(&toy->canEnter);
-    // Espera sua vez para entrar
+    // Espera ter a chance de se comunicar com o brinquedo
     pthread_mutex_lock(&toy->clientAccess);
     // Entra no brinquedo e registra sua entrada
     // ID do cliente no brinquedo
@@ -84,10 +82,6 @@ void go_ride(client_t* self, toy_t* toy) {
     // Se o brinquedo estiver cheio, sinaliza para iniciar
     if (toy->onboard_n == toy->capacity) {
         pthread_cond_signal(&toy->full);
-    }
-    // Do contrario apenas libera a entrada
-    else {
-        sem_post(&toy->canEnter);
     }
     // Libera a comunicaçao com o brinquedo
     pthread_mutex_unlock(&toy->clientAccess);

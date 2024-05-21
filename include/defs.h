@@ -46,7 +46,6 @@ typedef struct toy{
   struct timespec ts;       // Timespec auxiliar para o timer.
   // Sync
   sem_t hasSpace;               // Semáforo para indicar quantos lugares vagos ha ainda
-  sem_t canEnter;               // Semáforo que indica se o brinquedo esta parado ou nao
   sem_t startTimer;             // Semáforo para iniciar o timer na hora certa.
   pthread_mutex_t clientAccess; // Mutex para controlar a quem esta falando com o brinquedo.
   // Cond Sync

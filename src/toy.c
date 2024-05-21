@@ -55,7 +55,7 @@ void wait_crowd(toy_t *self){
     // Enquanto houver espaço no brinquedo e houver clientes no parque
     while ( self->onboard_n < self->capacity && !no_clients ) {
         // Libera a entrada de clientes
-        sem_post(&self->canEnter);
+        pthread_mutex_unlock(&self->clientAccess);
         // Espera o sinal do primeiro cliente para iniciar o timer de espera
         sem_wait(&self->startTimer);
         setClock(&self->ts, self->msWait);
@@ -66,6 +66,8 @@ void wait_crowd(toy_t *self){
         // Espera um sinal de que o brinquedo esteja cheio
         // ou que o tempo limite tenha sido atingido
         int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->ts);
+        // Bloqueia a comunicaçao de clientes com o brinquedo
+        pthread_mutex_lock(&self->clientAccess);
         // Se a condiçao abaixo for falsa, significa que todos os clientes
         // ja sairam do parque e o brinquedo deve ser desligado
         // Se for verdadeira o brinquedo deve começar
@@ -91,8 +93,6 @@ void startRide(toy_t *self){
 }
 
 void freeRide(toy_t *self){
-    // Bloqueia a comunicaça de clientes com o brinquedo
-    pthread_mutex_lock(&self->clientAccess);
     // Libera os clientes que estavam no brinquedo
     for ( int i = 0; i < self->onboard_n; i++ ) {
         // Busca o cliente pelo id
@@ -107,8 +107,6 @@ void freeRide(toy_t *self){
         sem_post(&self->hasSpace);
     }
     self->onboard_n = 0;
-    // Libera a comunicaçao com o brinquedo
-    pthread_mutex_unlock(&self->clientAccess);
     // Libera a condiçao de inicio do brinquedo
     pthread_mutex_unlock(&self->startLock);
 }
@@ -120,7 +118,7 @@ void setClock(struct timespec *ts, int ms){
     // Adiciona o tempo em ms
     ts->tv_nsec += ms * MILLION;
     // Se ts->tv_nsec for maior que 1 segundo (1 bilhao de nanosegundos)
-    // Incrementa o segundo e diminui 1 segundo de ts->tv_nsec
+    // Incrementa o segundo de tv_sec e diminui 1 segundo de ts->tv_nsec
     // Caso contrario as operaçoes abaixo nao tem efeito
     ts->tv_sec += ts->tv_nsec / BILLION;
     ts->tv_nsec = ts->tv_nsec % BILLION;
@@ -145,7 +143,6 @@ void open_toys(toy_args *args){
         pthread_mutex_init(&toys[i]->clientAccess, NULL);
         pthread_mutex_init(&toys[i]->startLock, NULL);
         sem_init(&toys[i]->hasSpace, 0, toys[i]->capacity);
-        sem_init(&toys[i]->canEnter, 0, 0);
         pthread_cond_init(&toys[i]->full, NULL);
         toys[i]->onboardID = (int*) malloc(toys[i]->capacity * sizeof(int));
         pthread_create(&toys[i]->thread, NULL, turn_on, (void *) toys[i]);
@@ -166,7 +163,6 @@ void close_toys(){
         pthread_mutex_destroy(&toys[i]->clientAccess);
         pthread_mutex_destroy(&toys[i]->startLock);
         sem_destroy(&toys[i]->hasSpace);
-        sem_destroy(&toys[i]->canEnter);
         pthread_cond_destroy(&toys[i]->full);
         free(toys[i]->onboardID);
         pthread_join(toys[i]->thread, NULL);
