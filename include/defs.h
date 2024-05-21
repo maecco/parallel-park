@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <errno.h> // ETIMEDOUT
-#include <time.h> // time_t
+#include <time.h> // time_t ...
 
 #define TRUE 1              // Em C nao temos True ou False (como no Python). Usamos macro TRUE para True (como no Python). 
 #define FALSE 0             // e FALSE para False (como no Python).
