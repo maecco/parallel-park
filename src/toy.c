@@ -28,6 +28,11 @@ void *turn_on(void *args){
 Tempo de espera [%d ms] | Tempo de percurso [%d ms] \n";
     debug(str, self->id, self->capacity, self->msWait, self->msRide);
 
+    // Seta as condiçoes iniciais
+    pthread_mutex_lock(&self->clientAccess);
+    for ( int i = 0; i < self->capacity; i++ ) {
+        sem_post(&self->hasSpace);
+    }
 
     while ( TRUE )
     {
@@ -50,8 +55,6 @@ Tempo de espera [%d ms] | Tempo de percurso [%d ms] \n";
 void wait_crowd(toy_t *self){
     
     debug("{TOY %d} - Esperando por turistas.\n", self->id);
-    // Trava o inicio do brinquedo até que as condiçoes sejam atendidas
-    pthread_mutex_lock(&self->startLock);
     // Enquanto houver espaço no brinquedo e houver clientes no parque
     while ( self->onboard_n < self->capacity && !no_clients ) {
         // Libera a entrada de clientes
@@ -65,7 +68,9 @@ void wait_crowd(toy_t *self){
         }
         // Espera um sinal de que o brinquedo esteja cheio
         // ou que o tempo limite tenha sido atingido
+        pthread_mutex_lock(&self->startLock);
         int ret = pthread_cond_timedwait(&self->full, &self->startLock, &self->ts);
+        pthread_mutex_unlock(&self->startLock);
         // Bloqueia a comunicaçao de clientes com o brinquedo
         pthread_mutex_lock(&self->clientAccess);
         // Se a condiçao abaixo for falsa, significa que todos os clientes
@@ -107,8 +112,6 @@ void freeRide(toy_t *self){
         sem_post(&self->hasSpace);
     }
     self->onboard_n = 0;
-    // Libera a condiçao de inicio do brinquedo
-    pthread_mutex_unlock(&self->startLock);
 }
 
 
@@ -142,7 +145,7 @@ void open_toys(toy_args *args){
         toys[i]->msRide = rand() % (MAX_RIDE_TIME - MIN_RIDE_TIME + 1) + MIN_RIDE_TIME;
         pthread_mutex_init(&toys[i]->clientAccess, NULL);
         pthread_mutex_init(&toys[i]->startLock, NULL);
-        sem_init(&toys[i]->hasSpace, 0, toys[i]->capacity);
+        sem_init(&toys[i]->hasSpace, 0, 0);
         pthread_cond_init(&toys[i]->full, NULL);
         toys[i]->onboardID = (int*) malloc(toys[i]->capacity * sizeof(int));
         pthread_create(&toys[i]->thread, NULL, turn_on, (void *) toys[i]);
